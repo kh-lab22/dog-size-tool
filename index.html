@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>犬用アパレル サイズ診断</title>
+  <!-- Google tag (gtag.js) - GA4 MEASUREMENT_ID を差し替えてください -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f5f0eb;color:#333;min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
@@ -280,6 +288,19 @@ const products = [
       {name:"S", chest_min:43,chest_max:58,neck_min:30,neck_max:40},
       {name:"M", chest_min:58,chest_max:71,neck_min:38,neck_max:50},
       {name:"L", chest_min:71,chest_max:86,neck_min:46,neck_max:60},
+    ]},
+
+  // Puppia（小型犬ハーネスで日本最人気の韓国ブランド）
+  { cat:"harness", sub:null, brand:"Puppia", name:"Soft Harness", url:"https://www.amazon.co.jp/s?k=Puppia+ソフトハーネス",
+    tags:[],
+    sizes:[
+      {name:"XXS",chest_min:23,chest_max:28},
+      {name:"XS", chest_min:26,chest_max:34},
+      {name:"S",  chest_min:33,chest_max:44},
+      {name:"M",  chest_min:43,chest_max:57},
+      {name:"L",  chest_min:56,chest_max:71},
+      {name:"XL", chest_min:68,chest_max:88},
+      {name:"XXL",chest_min:84,chest_max:107},
     ]},
 
   // ドギーマン（国内売れ筋1位）
@@ -590,11 +611,24 @@ function diagnose() {
       </div>
       <div class="psize">${sizeText}</div>
       ${noteText ? `<div class="pnote">${noteText}</div>` : ""}
-      <a class="pbtn" href="${r.url}" target="_blank" rel="noopener">商品を見る →</a>
+      <a class="pbtn" href="${r.url}" target="_blank" rel="noopener"
+         onclick="gtag('event','brand_click',{brand:'${r.brand}',product:'${r.name}',size:'${r.size||''}',status:'${r.status}'})">商品を見る →</a>
     </div>`;
   }
 
   document.getElementById("results").innerHTML = html;
+
+  // GA4イベント：診断実行ログ
+  gtag("event", "diagnose", {
+    category:   currentCat,
+    neck_cm:    neck  || 0,
+    chest_cm:   chest || 0,
+    back_cm:    back  || 0,
+    breed:      breedKey,
+    body_type:  bodyKey,
+    fit_count:  fitCount,
+    brands_filter: [...selectedBrands].join(",") || "all",
+  });
 }
 
 document.addEventListener("keydown", e => { if (e.key === "Enter") diagnose(); });
