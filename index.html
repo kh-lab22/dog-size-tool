@@ -80,6 +80,13 @@
     .pbtn:hover{background:#c96830}
     .no-fit .pbtn{display:none}
     .empty{text-align:center;color:#bbb;font-size:.88rem;padding:20px 0}
+
+    /* Brand filter */
+    .brand-filter{margin-bottom:20px}
+    .brand-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .brand-pill{padding:6px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s;background:#fff;color:#888;user-select:none}
+    .brand-pill.active{border-color:#3d8c5e;background:#3d8c5e;color:#fff}
+    .brand-pill.all-pill.active{border-color:#e07b39;background:#e07b39;color:#fff}
   </style>
 </head>
 <body>
@@ -175,6 +182,12 @@
         <option value="chubby">ぽっちゃり</option>
       </select>
     </div>
+  </div>
+
+  <!-- Brand filter -->
+  <div class="brand-filter">
+    <div class="section-label">ブランド絞り込み</div>
+    <div class="brand-pills" id="brand-pills"></div>
   </div>
 
   <button class="cta" onclick="diagnose()">フィット商品を調べる →</button>
@@ -383,6 +396,35 @@ const products = [
 // ========================
 let currentCat = "harness";
 let currentSub = "all";
+let selectedBrands = new Set(); // 空=すべて選択
+
+function buildBrandPills() {
+  const brands = [...new Set(products.filter(p => p.cat === currentCat).map(p => p.brand))];
+  const container = document.getElementById("brand-pills");
+  container.innerHTML = "";
+
+  // 「すべて」ピル
+  const allPill = document.createElement("div");
+  allPill.className = "brand-pill all-pill" + (selectedBrands.size === 0 ? " active" : "");
+  allPill.textContent = "すべて";
+  allPill.onclick = () => { selectedBrands.clear(); buildBrandPills(); };
+  container.appendChild(allPill);
+
+  brands.forEach(brand => {
+    const pill = document.createElement("div");
+    pill.className = "brand-pill" + (selectedBrands.has(brand) ? " active" : "");
+    pill.textContent = brand;
+    pill.onclick = () => {
+      if (selectedBrands.has(brand)) {
+        selectedBrands.delete(brand);
+      } else {
+        selectedBrands.add(brand);
+      }
+      buildBrandPills();
+    };
+    container.appendChild(pill);
+  });
+}
 
 // ========================
 // UI Control
@@ -392,7 +434,9 @@ document.querySelectorAll(".tab").forEach(t => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     t.classList.add("active");
     currentCat = t.dataset.cat;
+    selectedBrands.clear();
     updateUI();
+    buildBrandPills();
   });
 });
 
@@ -481,6 +525,7 @@ function diagnose() {
   // Filter products by category & sub-category
   const filtered = products.filter(p => {
     if (p.cat !== currentCat) return false;
+    if (selectedBrands.size > 0 && !selectedBrands.has(p.brand)) return false;
     if (currentCat === "clothes" && currentSub !== "all") {
       return p.tags.includes(currentSub) || p.sub === currentSub;
     }
@@ -553,6 +598,7 @@ function diagnose() {
 }
 
 document.addEventListener("keydown", e => { if (e.key === "Enter") diagnose(); });
+buildBrandPills();
 </script>
 </body>
 </html>
