@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>犬用アパレル サイズ診断</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f5f0eb;color:#333;min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:36px;max-width:600px;width:100%}
+    h1{font-size:1.45rem;font-weight:700;color:#2d2d2d;margin-bottom:4px}
+    .sub{color:#999;font-size:.88rem;margin-bottom:28px}
+
+    /* Category tabs */
+    .tab-group{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+    .tab{padding:9px 20px;border:2px solid #e0e0e0;border-radius:30px;font-size:.88rem;font-weight:600;cursor:pointer;transition:.2s;background:#fff;color:#888}
+    .tab.active{border-color:#e07b39;background:#e07b39;color:#fff}
+
+    /* Sub-category (服のみ) */
+    .subcat-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+    .subcat{padding:6px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s;background:#fff;color:#888}
+    .subcat.active{border-color:#e07b39;background:#fff5ef;color:#e07b39}
+    .hidden{display:none}
+
+    /* Inputs */
+    .input-section{margin-bottom:20px}
+    .section-label{font-size:.82rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+    .input-grid{display:grid;gap:12px}
+    .input-grid.cols2{grid-template-columns:1fr 1fr}
+    .input-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+    .field label{display:block;font-size:.85rem;font-weight:600;color:#555;margin-bottom:5px}
+    .field .row{display:flex;align-items:center;gap:8px}
+    .field input{flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:9px;font-size:1rem;outline:none;transition:.2s}
+    .field input:focus{border-color:#e07b39}
+    .field .unit{font-size:.82rem;color:#bbb;white-space:nowrap}
+
+    /* Breed + body type */
+    .selects-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    .selects-row select{padding:10px 14px;border:2px solid #e0e0e0;border-radius:9px;font-size:.88rem;outline:none;transition:.2s;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23bbb' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+    .selects-row select:focus{border-color:#e07b39}
+    .sel-label{font-size:.82rem;font-weight:600;color:#555;margin-bottom:5px}
+
+    /* Body type buttons */
+    .bodytype-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+    .bodytype-btn{padding:7px 16px;border:2px solid #e0e0e0;border-radius:20px;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;background:#fff;color:#888}
+    .bodytype-btn.active{border-color:#5a8dee;background:#5a8dee;color:#fff}
+
+    /* Measure guide */
+    .guide{background:#fdf6ee;border:1px solid #f0e0c8;border-radius:10px;padding:13px 16px;margin-bottom:20px;font-size:.82rem;color:#7a5c3a;line-height:1.75}
+    .guide strong{color:#5a3a1a}
+
+    /* CTA */
+    button.cta{width:100%;padding:15px;background:#e07b39;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+    button.cta:hover{background:#c96830}
+    button.cta:active{transform:scale(.98)}
+
+    /* Results */
+    #results{margin-top:28px}
+    .result-header{font-size:.95rem;font-weight:700;margin-bottom:14px;color:#2d2d2d}
+    .breed-note{background:#eef4ff;border:1px solid #c5d9ff;border-radius:9px;padding:11px 14px;font-size:.82rem;color:#3a5aa8;margin-bottom:14px;line-height:1.6}
+
+    .pcard{border:2px solid #e8e8e8;border-radius:12px;padding:15px 17px;margin-bottom:10px;transition:.2s}
+    .pcard.fit{border-color:#4caf7d;background:#f4fbf7}
+    .pcard.border{border-color:#f0c040;background:#fffdf0}
+    .pcard.no-fit{border-color:#e0e0e0;background:#fafafa;opacity:.6}
+    .pcard.warn{border-color:#ff9800;background:#fff8f0}
+
+    .pcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
+    .pname{font-weight:700;font-size:.9rem}
+    .pcategory{font-size:.72rem;color:#bbb;margin-top:1px}
+    .badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+    .badge.fit{background:#4caf7d;color:#fff}
+    .badge.border{background:#f0c040;color:#6a4a00}
+    .badge.no-fit{background:#e0e0e0;color:#888}
+    .badge.warn{background:#ff9800;color:#fff}
+
+    .psize{font-size:.83rem;color:#555;margin-bottom:4px}
+    .pnote{font-size:.78rem;color:#999;font-style:italic;margin-bottom:8px}
+    .pbtn{display:inline-block;padding:7px 16px;background:#e07b39;color:#fff;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none;transition:.2s}
+    .pbtn:hover{background:#c96830}
+    .no-fit .pbtn{display:none}
+    .empty{text-align:center;color:#bbb;font-size:.88rem;padding:20px 0}
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🐾 犬用アパレル サイズ診断</h1>
+  <p class="sub">計測値・犬種・体型を入れて、フィットする商品を見つける</p>
+
+  <!-- Category -->
+  <div class="section-label">カテゴリ</div>
+  <div class="tab-group">
+    <div class="tab active" data-cat="harness">ハーネス</div>
+    <div class="tab" data-cat="collar">首輪・リード</div>
+    <div class="tab" data-cat="clothes">服</div>
+  </div>
+
+  <!-- Sub-category（服のみ） -->
+  <div id="subcat-wrap" class="hidden">
+    <div class="section-label">服のタイプ</div>
+    <div class="subcat-group">
+      <div class="subcat active" data-sub="all">すべて</div>
+      <div class="subcat" data-sub="summer">夏服・タンクトップ</div>
+      <div class="subcat" data-sub="front-open">前開き</div>
+      <div class="subcat" data-sub="cooling">クーリングベスト</div>
+      <div class="subcat" data-sub="full">全身カバー型</div>
+    </div>
+  </div>
+
+  <!-- Measure guide -->
+  <div id="guide" class="guide">
+    <strong>📏 計測ポイント</strong><br>
+    首回り：首の付け根（指1〜2本入る余裕で）<br>
+    腹囲：前足直後の胸の一番太い部分
+  </div>
+
+  <!-- Inputs -->
+  <div class="input-section">
+    <div class="section-label">サイズ計測値</div>
+    <div id="input-grid" class="input-grid cols2">
+      <div class="field" id="field-neck">
+        <label>首回り</label>
+        <div class="row"><input type="number" id="neck" placeholder="例: 28" min="10" max="120"><span class="unit">cm</span></div>
+      </div>
+      <div class="field" id="field-chest">
+        <label>腹囲（胸回り）</label>
+        <div class="row"><input type="number" id="chest" placeholder="例: 42" min="15" max="150"><span class="unit">cm</span></div>
+      </div>
+      <div class="field hidden" id="field-back">
+        <label>背丈</label>
+        <div class="row"><input type="number" id="back" placeholder="例: 30" min="10" max="100"><span class="unit">cm</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breed + body type -->
+  <div class="selects-row">
+    <div>
+      <div class="sel-label">犬種</div>
+      <select id="breed">
+        <option value="standard">その他・雑種</option>
+        <optgroup label="小型犬">
+          <option value="chihuahua">チワワ</option>
+          <option value="toy_poodle">トイプードル</option>
+          <option value="shiba_small">柴犬（小）</option>
+          <option value="dachshund">ダックスフンド</option>
+          <option value="pomeranian">ポメラニアン</option>
+          <option value="yorkie">ヨークシャテリア</option>
+          <option value="maltese">マルチーズ</option>
+        </optgroup>
+        <optgroup label="中型犬">
+          <option value="french_bulldog">フレンチブルドッグ</option>
+          <option value="pug">パグ</option>
+          <option value="boston">ボストンテリア</option>
+          <option value="shiba">柴犬（標準）</option>
+          <option value="corgi">コーギー</option>
+          <option value="beagle">ビーグル</option>
+          <option value="sheltie">シェルティ</option>
+        </optgroup>
+        <optgroup label="大型犬">
+          <option value="golden">ゴールデンレトリバー</option>
+          <option value="labrador">ラブラドール</option>
+          <option value="husky">ハスキー</option>
+          <option value="greyhound">グレイハウンド系</option>
+          <option value="shepherd">ジャーマンシェパード</option>
+        </optgroup>
+      </select>
+    </div>
+    <div>
+      <div class="sel-label">体型</div>
+      <select id="bodytype">
+        <option value="standard">標準</option>
+        <option value="slim">スリム</option>
+        <option value="muscular">筋肉質</option>
+        <option value="chubby">ぽっちゃり</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="cta" onclick="diagnose()">フィット商品を調べる →</button>
+
+  <div id="results"></div>
+</div>
+
+<script>
+// ========================
+// データベース
+// ========================
+
+const breedProfiles = {
+  standard:       { note: null, warn: null, prefer: [] },
+  chihuahua:      { note: "首が細め。タートルネック型は避け、Vネックかハーネスが向いています。", warn: null, prefer: ["harness"] },
+  toy_poodle:     { note: null, warn: null, prefer: [] },
+  shiba_small:    { note: "やや筋肉質。サイズがボーダーの場合は大きめを選ぶと安心です。", warn: null, prefer: [] },
+  dachshund:      { note: "胴が長い犬種です。背丈の数値が重要。前開き服が着脱しやすいです。", warn: null, prefer: ["front-open"] },
+  pomeranian:     { note: "被毛が多め。実測値より1サイズ大きめを基準にすると良いです。", warn: null, prefer: [] },
+  yorkie:         { note: null, warn: null, prefer: [] },
+  maltese:        { note: null, warn: null, prefer: [] },
+  french_bulldog: { note: "短頭種で首が太く、胸幅が広めです。首への圧迫を避けるため、胸部支持型ハーネスが特に推奨されます。", warn: "通常の首輪は気道を圧迫する可能性があります。ハーネスを優先してください。", prefer: ["harness", "front-clip"] },
+  pug:            { note: "短頭種。首輪は気道圧迫リスクあり。ハーネス推奨です。", warn: "首輪の使用は推奨されません（短頭種リスク）。", prefer: ["harness"] },
+  boston:         { note: "短頭種。ハーネス優先。胸幅が広いため腹囲の数値を正確に測ってください。", warn: null, prefer: ["harness"] },
+  shiba:          { note: "標準体型ですがやや筋肉質。ボーダーの場合は大きめを選ぶと良いです。", warn: null, prefer: [] },
+  corgi:          { note: "胴が長く足が短め。背丈の計測値が特に重要です。", warn: null, prefer: [] },
+  beagle:         { note: null, warn: null, prefer: [] },
+  sheltie:        { note: "被毛が厚め。実測値より1サイズ大きめを基準にしてください。", warn: null, prefer: [] },
+  golden:         { note: null, warn: null, prefer: [] },
+  labrador:       { note: "筋肉質でがっしりした体型が多いです。ボーダーラインは大きめを推奨します。", warn: null, prefer: [] },
+  husky:          { note: null, warn: null, prefer: [] },
+  greyhound:      { note: "首が長く深胸で細腰。首と胸の差が大きいため、通常の首輪は外れやすいです。マルチンゲール首輪を推奨します。", warn: null, prefer: ["martingale"] },
+  shepherd:       { note: null, warn: null, prefer: [] },
+};
+
+const bodyTypeConfig = {
+  standard: { upperTolerance: 1.0,  note: null },
+  slim:     { upperTolerance: 1.05, note: "スリム体型のため、上限より少し大きめでもフィットしやすいです。" },
+  muscular: { upperTolerance: 0.92, note: "筋肉質体型のため、サイズ上限に近い場合は1サイズ上を推奨します。" },
+  chubby:   { upperTolerance: 0.90, note: "ぽっちゃり体型のため、ボーダーラインは大きめを選んでください。" },
+};
+
+// ========================
+// 商品データ
+// ========================
+const products = [
+  // --- HARNESS ---
+  { cat:"harness", sub:null, brand:"Ruffwear", name:"Flagline Harness", url:"https://www.amazon.co.jp/s?k=Ruffwear+Flagline+Harness",
+    tags:["front-clip"],
+    sizes:[
+      {name:"XS",chest_min:33,chest_max:43},
+      {name:"S", chest_min:43,chest_max:56},
+      {name:"M", chest_min:56,chest_max:69},
+      {name:"L", chest_min:69,chest_max:84},
+      {name:"XL",chest_min:84,chest_max:107},
+    ]},
+  { cat:"harness", sub:null, brand:"Julius-K9", name:"IDC パワーハーネス", url:"https://www.amazon.co.jp/s?k=Julius+K9+IDC",
+    tags:[],
+    sizes:[
+      {name:"Puppy",    chest_min:23,chest_max:30},
+      {name:"Mini-Mini",chest_min:30,chest_max:36},
+      {name:"Mini",     chest_min:36,chest_max:47},
+      {name:"0",        chest_min:47,chest_max:67},
+      {name:"1",        chest_min:67,chest_max:82},
+      {name:"2",        chest_min:82,chest_max:100},
+    ]},
+  { cat:"harness", sub:null, brand:"Hurtta", name:"Weekend Warrior Harness", url:"https://www.amazon.co.jp/s?k=Hurtta+Weekend+Warrior",
+    tags:[],
+    sizes:[
+      {name:"25S", chest_min:25,chest_max:35},
+      {name:"35M", chest_min:35,chest_max:45},
+      {name:"45L", chest_min:45,chest_max:55},
+      {name:"55XL",chest_min:55,chest_max:65},
+      {name:"65XX",chest_min:65,chest_max:80},
+      {name:"80XXL",chest_min:80,chest_max:100},
+    ]},
+  { cat:"harness", sub:null, brand:"EzyDog", name:"Chest Plate Harness", url:"https://www.amazon.co.jp/s?k=EzyDog+Chest+Plate",
+    tags:["front-clip"],
+    sizes:[
+      {name:"XS",chest_min:38,chest_max:48,neck_min:20,neck_max:30},
+      {name:"S", chest_min:46,chest_max:60,neck_min:25,neck_max:38},
+      {name:"M", chest_min:58,chest_max:74,neck_min:33,neck_max:48},
+      {name:"L", chest_min:71,chest_max:88,neck_min:40,neck_max:56},
+      {name:"XL",chest_min:86,chest_max:104,neck_min:48,neck_max:64},
+    ]},
+  { cat:"harness", sub:null, brand:"RC Pet Products", name:"Cirque Harness", url:"https://www.amazon.co.jp/s?k=RC+Pet+Cirque+Harness",
+    tags:[],
+    sizes:[
+      {name:"XS",chest_min:33,chest_max:43,neck_min:23,neck_max:30},
+      {name:"S", chest_min:43,chest_max:58,neck_min:30,neck_max:40},
+      {name:"M", chest_min:58,chest_max:71,neck_min:38,neck_max:50},
+      {name:"L", chest_min:71,chest_max:86,neck_min:46,neck_max:60},
+    ]},
+
+  // --- COLLAR ---
+  { cat:"collar", sub:"flat", brand:"Ruffwear", name:"Flat Out Collar", url:"https://www.amazon.co.jp/s?k=Ruffwear+Flat+Out+Collar",
+    tags:[],
+    sizes:[
+      {name:"XS",neck_min:20,neck_max:28},
+      {name:"S", neck_min:28,neck_max:36},
+      {name:"M", neck_min:36,neck_max:51},
+      {name:"L", neck_min:51,neck_max:66},
+    ]},
+  { cat:"collar", sub:"martingale", brand:"Coastal Pet", name:"Herm Sprenger マルチンゲール", url:"https://www.amazon.co.jp/s?k=martingale+collar+dog",
+    tags:["martingale"],
+    note:"グレイハウンド・ホイペットなど首細犬種に特に適合",
+    sizes:[
+      {name:"S", neck_min:25,neck_max:38},
+      {name:"M", neck_min:38,neck_max:51},
+      {name:"L", neck_min:51,neck_max:64},
+    ]},
+  { cat:"collar", sub:"flat", brand:"Julius-K9", name:"カラー（ベルクロ付）", url:"https://www.amazon.co.jp/s?k=Julius+K9+collar",
+    tags:[],
+    sizes:[
+      {name:"Mini",neck_min:19,neck_max:24},
+      {name:"Mini2",neck_min:24,neck_max:34},
+      {name:"0",   neck_min:34,neck_max:46},
+      {name:"1",   neck_min:46,neck_max:62},
+      {name:"2",   neck_min:62,neck_max:78},
+    ]},
+
+  // --- CLOTHES ---
+  { cat:"clothes", sub:"summer", brand:"犬印本舗", name:"タンクトップ（夏用メッシュ）", url:"https://www.rakuten.co.jp/search?k=犬+タンクトップ+夏",
+    tags:["summer"],
+    sizes:[
+      {name:"SS",chest_min:24,chest_max:32,back_min:16,back_max:22},
+      {name:"S", chest_min:30,chest_max:40,back_min:20,back_max:28},
+      {name:"M", chest_min:38,chest_max:50,back_min:26,back_max:36},
+      {name:"L", chest_min:48,chest_max:62,back_min:32,back_max:44},
+      {name:"XL",chest_min:58,chest_max:74,back_min:40,back_max:54},
+    ]},
+  { cat:"clothes", sub:"cooling", brand:"Hurtta", name:"Cooling Wrap", url:"https://www.amazon.co.jp/s?k=Hurtta+Cooling+Wrap",
+    tags:["cooling","summer"],
+    sizes:[
+      {name:"25XS",chest_min:25,chest_max:35},
+      {name:"35S", chest_min:35,chest_max:45},
+      {name:"45M", chest_min:45,chest_max:55},
+      {name:"55L", chest_min:55,chest_max:65},
+      {name:"65XL",chest_min:65,chest_max:80},
+    ]},
+  { cat:"clothes", sub:"front-open", brand:"Pet Paradise", name:"前開きシャツ（ドット柄）", url:"https://www.rakuten.co.jp/search?k=犬+前開き+シャツ",
+    tags:["front-open"],
+    note:"着脱かんたん。ダックスフンドやコーギーに向いています",
+    sizes:[
+      {name:"SS",chest_min:22,chest_max:30,back_min:14,back_max:20},
+      {name:"S", chest_min:28,chest_max:38,back_min:18,back_max:26},
+      {name:"M", chest_min:36,chest_max:48,back_min:24,back_max:34},
+      {name:"L", chest_min:44,chest_max:58,back_min:30,back_max:42},
+      {name:"XL",chest_min:54,chest_max:70,back_min:38,back_max:52},
+    ]},
+  { cat:"clothes", sub:"full", brand:"RC Pet Products", name:"Packable Rainwear", url:"https://www.amazon.co.jp/s?k=RC+Pet+Packable+Rainwear",
+    tags:["full"],
+    sizes:[
+      {name:"XS",chest_min:33,chest_max:43,neck_min:23,neck_max:30,back_min:20,back_max:28},
+      {name:"S", chest_min:43,chest_max:56,neck_min:28,neck_max:38,back_min:26,back_max:36},
+      {name:"M", chest_min:56,chest_max:69,neck_min:35,neck_max:48,back_min:33,back_max:45},
+      {name:"L", chest_min:69,chest_max:84,neck_min:43,neck_max:58,back_min:40,back_max:55},
+    ]},
+];
+
+// ========================
+// State
+// ========================
+let currentCat = "harness";
+let currentSub = "all";
+
+// ========================
+// UI Control
+// ========================
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    currentCat = t.dataset.cat;
+    updateUI();
+  });
+});
+
+document.querySelectorAll(".subcat").forEach(s => {
+  s.addEventListener("click", () => {
+    document.querySelectorAll(".subcat").forEach(x => x.classList.remove("active"));
+    s.classList.add("active");
+    currentSub = s.dataset.sub;
+  });
+});
+
+function updateUI() {
+  const isClothes  = currentCat === "clothes";
+  const isCollar   = currentCat === "collar";
+  const isHarness  = currentCat === "harness";
+
+  document.getElementById("subcat-wrap").classList.toggle("hidden", !isClothes);
+  document.getElementById("field-back").classList.toggle("hidden", !isClothes);
+  document.getElementById("field-chest").classList.toggle("hidden", isCollar);
+
+  const grid = document.getElementById("input-grid");
+  grid.className = "input-grid " + (isClothes ? "cols3" : "cols2");
+
+  const guideMap = {
+    harness: "<strong>📏 計測ポイント</strong><br>首回り：首の付け根（指1〜2本入る余裕で）<br>腹囲：前足直後の胸の一番太い部分",
+    collar:  "<strong>📏 計測ポイント</strong><br>首回り：首の付け根をメジャーで1周（指2本入る余裕で）",
+    clothes: "<strong>📏 計測ポイント</strong><br>首回り：首の付け根<br>腹囲：胸の一番太い部分<br>背丈：首の付け根〜しっぽの付け根",
+  };
+  document.getElementById("guide").innerHTML = guideMap[currentCat];
+  document.getElementById("results").innerHTML = "";
+}
+
+// ========================
+// Matching Logic
+// ========================
+function matchSize(product, { neck, chest, back }, bodyTypeTolerance) {
+  let bestFit = null, bestStatus = "no-fit";
+
+  for (const s of product.sizes) {
+    const adjMax = v => v !== undefined ? v * bodyTypeTolerance : undefined;
+
+    const chestOk  = s.chest_min == null || (chest != null && chest >= s.chest_min && chest <= adjMax(s.chest_max));
+    const neckOk   = s.neck_min  == null || (neck  != null && neck  >= s.neck_min  && neck  <= adjMax(s.neck_max));
+    const backOk   = s.back_min  == null || (back  != null && back  >= s.back_min  && back  <= adjMax(s.back_max));
+
+    const borderCheck = (v, min, max) => {
+      if (v == null || min == null) return true;
+      const adjM = adjMax(max);
+      return (v >= min * 0.92 && v < min) || (v > adjM && v <= adjM * 1.08);
+    };
+    const chestB = !chestOk && borderCheck(chest, s.chest_min, s.chest_max);
+    const neckB  = !neckOk  && borderCheck(neck,  s.neck_min,  s.neck_max);
+    const backB  = !backOk  && borderCheck(back,  s.back_min,  s.back_max);
+
+    if (chestOk && neckOk && backOk) return { status: "fit", size: s.name };
+    if ((chestOk||chestB) && (neckOk||neckB) && (backOk||backB)) {
+      bestFit = s.name; bestStatus = "border";
+    }
+  }
+  return bestFit ? { status: bestStatus, size: bestFit } : { status: "no-fit", size: null };
+}
+
+// ========================
+// Diagnose
+// ========================
+function diagnose() {
+  const neck  = parseFloat(document.getElementById("neck").value)  || null;
+  const chest = parseFloat(document.getElementById("chest").value) || null;
+  const back  = parseFloat(document.getElementById("back").value)  || null;
+  const breedKey = document.getElementById("breed").value;
+  const bodyKey  = document.getElementById("bodytype").value;
+
+  const needChest = currentCat !== "collar";
+  if (needChest && !chest) {
+    document.getElementById("results").innerHTML = '<p class="empty">腹囲（胸回り）を入力してください</p>';
+    return;
+  }
+  if (!neck && currentCat === "collar") {
+    document.getElementById("results").innerHTML = '<p class="empty">首回りを入力してください</p>';
+    return;
+  }
+
+  const breed    = breedProfiles[breedKey] || breedProfiles.standard;
+  const bodyConf = bodyTypeConfig[bodyKey] || bodyTypeConfig.standard;
+
+  // Filter products by category & sub-category
+  const filtered = products.filter(p => {
+    if (p.cat !== currentCat) return false;
+    if (currentCat === "clothes" && currentSub !== "all") {
+      return p.tags.includes(currentSub) || p.sub === currentSub;
+    }
+    return true;
+  });
+
+  // Prioritise products matching breed preferences
+  const sorted = [...filtered].sort((a, b) => {
+    const aMatch = breed.prefer.some(t => a.tags.includes(t)) ? -1 : 0;
+    const bMatch = breed.prefer.some(t => b.tags.includes(t)) ? -1 : 0;
+    return aMatch - bMatch;
+  });
+
+  const results = sorted.map(p => {
+    const match = matchSize(p, { neck, chest, back }, bodyConf.upperTolerance);
+    const isPreferred = breed.prefer.some(t => p.tags.includes(t));
+
+    // muscular/chubby near upper limit → warn
+    let warnMsg = null;
+    if ((bodyKey === "muscular" || bodyKey === "chubby") && match.status === "border") {
+      warnMsg = "体型上、1サイズ上を推奨します";
+    }
+    return { ...p, ...match, isPreferred, warnMsg };
+  });
+
+  const statusOrder = { fit: 0, border: 1, "no-fit": 2 };
+  results.sort((a, b) => {
+    const so = statusOrder[a.status] - statusOrder[b.status];
+    if (so !== 0) return so;
+    return (b.isPreferred ? 1 : 0) - (a.isPreferred ? 1 : 0);
+  });
+
+  const fitCount = results.filter(r => r.status === "fit").length;
+
+  let html = `<p class="result-header">診断結果 — フィット ${fitCount}件 / ${results.length}商品</p>`;
+
+  // Breed/body notes
+  const notes = [breed.note, breed.warn, bodyConf.note].filter(Boolean);
+  if (notes.length) {
+    html += `<div class="breed-note">`;
+    if (breed.warn) html += `⚠️ <strong>${breed.warn}</strong><br>`;
+    if (breed.note && breed.note !== breed.warn) html += `💡 ${breed.note}<br>`;
+    if (bodyConf.note) html += `📐 ${bodyConf.note}`;
+    html += `</div>`;
+  }
+
+  for (const r of results) {
+    const statusLabel = { fit: "フィット ✓", border: "ボーダー", "no-fit": "サイズなし" };
+    const effectiveStatus = r.warnMsg ? "warn" : r.status;
+    const effectiveBadge  = r.warnMsg ? "要確認 ⚠" : statusLabel[r.status];
+    const sizeText = r.size ? `推奨サイズ: <strong>${r.size}</strong>` : "対応サイズなし";
+    const noteText = r.warnMsg || (r.status === "border" ? "実測値でご確認ください" : r.note || "");
+    const tag = r.isPreferred ? " ⭐ この犬種に特に向いています" : "";
+
+    html += `
+    <div class="pcard ${effectiveStatus}">
+      <div class="pcard-top">
+        <div>
+          <div class="pname">${r.brand} — ${r.name}${tag}</div>
+        </div>
+        <span class="badge ${effectiveStatus}">${effectiveBadge}</span>
+      </div>
+      <div class="psize">${sizeText}</div>
+      ${noteText ? `<div class="pnote">${noteText}</div>` : ""}
+      <a class="pbtn" href="${r.url}" target="_blank" rel="noopener">商品を見る →</a>
+    </div>`;
+  }
+
+  document.getElementById("results").innerHTML = html;
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Enter") diagnose(); });
+</script>
+</body>
+</html>
